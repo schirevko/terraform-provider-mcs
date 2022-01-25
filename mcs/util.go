@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -71,4 +72,35 @@ func ensureOnlyOnePresented(d *schema.ResourceData, keys ...string) (string, err
 	}
 
 	return keyPresented, nil
+}
+
+func checkForRetryableError(err error) *resource.RetryError {
+	switch e := err.(type) {
+	case gophercloud.ErrDefault500:
+		return resource.RetryableError(err)
+	case gophercloud.ErrDefault409:
+		return resource.RetryableError(err)
+	case gophercloud.ErrDefault503:
+		return resource.RetryableError(err)
+	case gophercloud.ErrUnexpectedResponseCode:
+		if e.GetStatusCode() == 504 || e.GetStatusCode() == 502 {
+			return resource.RetryableError(err)
+		} else {
+			return resource.NonRetryableError(err)
+		}
+	default:
+		return resource.NonRetryableError(err)
+	}
+}
+
+func expandVendorOptions(vendOptsRaw []interface{}) map[string]interface{} {
+	vendorOptions := make(map[string]interface{})
+
+	for _, option := range vendOptsRaw {
+		for optKey, optValue := range option.(map[string]interface{}) {
+			vendorOptions[optKey] = optValue
+		}
+	}
+
+	return vendorOptions
 }
