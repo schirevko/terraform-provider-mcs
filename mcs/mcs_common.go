@@ -14,7 +14,7 @@ func getRequestOpts(codes ...int) *gophercloud.RequestOpts {
 	if len(codes) != 0 {
 		reqOpts.OkCodes = codes
 	}
-	addMicroVersionHeader(reqOpts)
+	//addMicroVersionHeader(reqOpts)
 	return reqOpts
 }
 
