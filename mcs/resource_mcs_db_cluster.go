@@ -148,11 +148,6 @@ func resourceDatabaseCluster() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 						},
-						"fixed_ip_v4": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
-						},
 					},
 				},
 			},
