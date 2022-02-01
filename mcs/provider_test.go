@@ -35,6 +35,9 @@ func init() {
 		"mcs": func() (*schema.Provider, error) {
 			return testAccProvider, nil
 		},
+		// "terraform-provider-openstack/openstack": func() (*schema.Provider, error) {
+		// 	return testAccProvider, nil
+		// },
 	}
 }
 
@@ -43,7 +46,7 @@ func testAccPreCheckCompute(t *testing.T) {
 		"OS_FLAVOR_ID": osFlavorID,
 		"OS_IMAGE_ID":  osImageID,
 		// "OS_FLAVOR_NAME": osFlavorName,
-		// "OS_NETWORK_ID":  osNetworkID,
+		"OS_NETWORK_ID":  osNetworkID,
 		"OS_REGION_NAME": osRegionName,
 	}
 	for k, v := range vars {

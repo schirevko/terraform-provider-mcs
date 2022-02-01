@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/pagination"
 )
 
 func TestAccComputeInstance_basic(t *testing.T) {
@@ -222,36 +224,30 @@ func TestAccComputeInstance_basic(t *testing.T) {
 // 	})
 // }
 
-// func TestAccComputeInstance_bootFromVolumeImage(t *testing.T) {
-// 	var instance servers.Server
+func TestAccComputeInstance_bootFromVolumeImage(t *testing.T) {
+	var instance servers.Server
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccComputeInstanceBootFromVolumeImage(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
-// 					testAccCheckComputeInstanceBootVolumeAttachment(&instance),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheckCompute(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeInstanceBootFromVolumeImage(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
+					testAccCheckComputeInstanceBootVolumeAttachment(&instance),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccComputeInstance_bootFromVolumeVolume(t *testing.T) {
 // 	var instance servers.Server
 
 // 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
+// 		PreCheck:          func() { testAccPreCheckCompute(t) },
 // 		ProviderFactories: testAccProviders,
 // 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
 // 		Steps: []resource.TestStep{
@@ -266,88 +262,76 @@ func TestAccComputeInstance_basic(t *testing.T) {
 // 	})
 // }
 
-// func TestAccComputeInstance_bootFromVolumeForceNew(t *testing.T) {
-// 	var instance1 servers.Server
-// 	var instance2 servers.Server
+func TestAccComputeInstance_bootFromVolumeForceNew(t *testing.T) {
+	var instance1 servers.Server
+	var instance2 servers.Server
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccComputeInstanceBootFromVolumeForceNew1(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists(
-// 						"mcs_compute_instance.instance_1", &instance1),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccComputeInstanceBootFromVolumeForceNew2(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists(
-// 						"mcs_compute_instance.instance_1", &instance2),
-// 					testAccCheckComputeInstanceInstanceIDsDoNotMatch(&instance1, &instance2),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheckCompute(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeInstanceBootFromVolumeForceNew1(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists(
+						"mcs_compute_instance.instance_1", &instance1),
+				),
+			},
+			{
+				Config: testAccComputeInstanceBootFromVolumeForceNew2(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists(
+						"mcs_compute_instance.instance_1", &instance2),
+					testAccCheckComputeInstanceInstanceIDsDoNotMatch(&instance1, &instance2),
+				),
+			},
+		},
+	})
+}
 
-// func TestAccComputeInstance_blockDeviceNewVolume(t *testing.T) {
-// 	var instance servers.Server
+func TestAccComputeInstance_blockDeviceNewVolume(t *testing.T) {
+	var instance servers.Server
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccComputeInstanceBlockDeviceNewVolume(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheckCompute(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeInstanceBlockDeviceNewVolume(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
+				),
+			},
+		},
+	})
+}
 
-// func TestAccComputeInstance_blockDeviceNewVolumeTypeAndBus(t *testing.T) {
-// 	var instance servers.Server
+func TestAccComputeInstance_blockDeviceNewVolumeTypeAndBus(t *testing.T) {
+	var instance servers.Server
 
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccComputeInstanceBlockDeviceNewVolumeTypeAndBus(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheckCompute(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeInstanceBlockDeviceNewVolumeTypeAndBus(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccComputeInstance_blockDeviceExistingVolume(t *testing.T) {
 // 	var instance servers.Server
 // 	var volume volumes.Volume
 
 // 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
+// 		PreCheck:          func() { testAccPreCheckCompute(t) },
 // 		ProviderFactories: testAccProviders,
 // 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
 // 		Steps: []resource.TestStep{
@@ -850,49 +834,49 @@ func testAccCheckComputeInstanceExists(n string, instance *servers.Server) resou
 // 	}
 // }
 
-// func testAccCheckComputeInstanceBootVolumeAttachment(
-// 	instance *servers.Server) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		var attachments []volumeattach.VolumeAttachment
+func testAccCheckComputeInstanceBootVolumeAttachment(
+	instance *servers.Server) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		var attachments []volumeattach.VolumeAttachment
 
-// 		config := testAccProvider.Meta().(*Config)
-// 		computeClient, err := config.ComputeV2Client(osRegionName)
-// 		if err != nil {
-// 			return err
-// 		}
+		config := testAccProvider.Meta().(configer)
+		computeClient, err := config.ComputeV2Client(osRegionName)
+		if err != nil {
+			return err
+		}
 
-// 		err = volumeattach.List(computeClient, instance.ID).EachPage(
-// 			func(page pagination.Page) (bool, error) {
-// 				actual, err := volumeattach.ExtractVolumeAttachments(page)
-// 				if err != nil {
-// 					return false, fmt.Errorf("Unable to lookup attachment: %s", err)
-// 				}
+		err = volumeattach.List(computeClient, instance.ID).EachPage(
+			func(page pagination.Page) (bool, error) {
+				actual, err := volumeattach.ExtractVolumeAttachments(page)
+				if err != nil {
+					return false, fmt.Errorf("Unable to lookup attachment: %s", err)
+				}
 
-// 				attachments = actual
-// 				return true, nil
-// 			})
-// 		if err != nil {
-// 			return fmt.Errorf("Unable to list volume attachments")
-// 		}
+				attachments = actual
+				return true, nil
+			})
+		if err != nil {
+			return fmt.Errorf("Unable to list volume attachments")
+		}
 
-// 		if len(attachments) == 1 {
-// 			return nil
-// 		}
+		if len(attachments) == 1 {
+			return nil
+		}
 
-// 		return fmt.Errorf("No attached volume found")
-// 	}
-// }
+		return fmt.Errorf("No attached volume found")
+	}
+}
 
-// func testAccCheckComputeInstanceInstanceIDsDoNotMatch(
-// 	instance1, instance2 *servers.Server) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		if instance1.ID == instance2.ID {
-// 			return fmt.Errorf("Instance was not recreated")
-// 		}
+func testAccCheckComputeInstanceInstanceIDsDoNotMatch(
+	instance1, instance2 *servers.Server) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if instance1.ID == instance2.ID {
+			return fmt.Errorf("Instance was not recreated")
+		}
 
-// 		return nil
-// 	}
-// }
+		return nil
+	}
+}
 
 // func testAccCheckComputeInstanceState(
 // 	instance *servers.Server, state string) resource.TestCheckFunc {
@@ -1099,25 +1083,26 @@ resource "mcs_compute_instance" "instance_1" {
 // `, osNetworkID)
 // }
 
-// func testAccComputeInstanceBootFromVolumeImage() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
+func testAccComputeInstanceBootFromVolumeImage() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
 //   security_groups = ["default"]
-//   block_device {
-//     uuid = "%s"
-//     source_type = "image"
-//     volume_size = 5
-//     boot_index = 0
-//     destination_type = "volume"
-//     delete_on_termination = true
-//   }
+  block_device {
+    uuid = "%s"
+    source_type = "image"
+    volume_size = 5
+    boot_index = 0
+    destination_type = "volume"
+    delete_on_termination = true
+  }
 //   network {
 //     uuid = "%s"
 //   }
-// }
-// `, osImageID, osNetworkID)
-// }
+network_mode = "none"
+}
+`, osImageID, osNetworkID)
+}
 
 // func testAccComputeInstanceBootFromVolumeVolume() string {
 // 	return fmt.Sprintf(`
@@ -1127,118 +1112,123 @@ resource "mcs_compute_instance" "instance_1" {
 //   image_id = "%s"
 // }
 
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
-//   security_groups = ["default"]
-//   block_device {
-//     uuid = "${openstack_blockstorage_volume_v3.vol_1.id}"
-//     source_type = "volume"
-//     boot_index = 0
-//     destination_type = "volume"
-//     delete_on_termination = true
-//   }
-//   network {
-//     uuid = "%s"
-//   }
-// }
-// `, osImageID, osNetworkID)
-// }
-
-// func testAccComputeInstanceBootFromVolumeForceNew1() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
-//   security_groups = ["default"]
-//   block_device {
-//     uuid = "%s"
-//     source_type = "image"
-//     volume_size = 5
-//     boot_index = 0
-//     destination_type = "volume"
-//     delete_on_termination = true
-//   }
-//   network {
-//     uuid = "%s"
-//   }
-// }
-// `, osImageID, osNetworkID)
+// // resource "mcs_compute_instance" "instance_1" {
+// //   name = "instance_1"
+// //  // security_groups = ["default"]
+// //   block_device {
+// //     uuid = "${openstack_blockstorage_volume_v3.vol_1.id}"
+// //     source_type = "volume"
+// //     boot_index = 0
+// //     destination_type = "volume"
+// //     delete_on_termination = true
+// //   }
+// // //   network {
+// // //     uuid = "%s"
+// // //   }
+// // 	network_mode="none"
+// // }
+// // `, osImageID, osNetworkID)
 // }
 
-// func testAccComputeInstanceBootFromVolumeForceNew2() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
+func testAccComputeInstanceBootFromVolumeForceNew1() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
 //   security_groups = ["default"]
-//   block_device {
-//     uuid = "%s"
-//     source_type = "image"
-//     volume_size = 4
-//     boot_index = 0
-//     destination_type = "volume"
-//     delete_on_termination = true
-//   }
+  block_device {
+    uuid = "%s"
+    source_type = "image"
+    volume_size = 5
+    boot_index = 0
+    destination_type = "volume"
+    delete_on_termination = true
+  }
 //   network {
 //     uuid = "%s"
 //   }
-// }
-// `, osImageID, osNetworkID)
-// }
+network_mode = "none"
+}
+`, osImageID, osNetworkID)
+}
 
-// func testAccComputeInstanceBlockDeviceNewVolume() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
+func testAccComputeInstanceBootFromVolumeForceNew2() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
 //   security_groups = ["default"]
-//   block_device {
-//     uuid = "%s"
-//     source_type = "image"
-//     destination_type = "local"
-//     boot_index = 0
-//     delete_on_termination = true
-//   }
-//   block_device {
-//     source_type = "blank"
-//     destination_type = "volume"
-//     volume_size = 1
-//     boot_index = 1
-//     delete_on_termination = true
-//   }
+  block_device {
+    uuid = "%s"
+    source_type = "image"
+    volume_size = 4
+    boot_index = 0
+    destination_type = "volume"
+    delete_on_termination = true
+  }
 //   network {
 //     uuid = "%s"
 //   }
-// }
-// `, osImageID, osNetworkID)
-// }
+network_mode = "none"
+}
+`, osImageID, osNetworkID)
+}
 
-// func testAccComputeInstanceBlockDeviceNewVolumeTypeAndBus() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
+func testAccComputeInstanceBlockDeviceNewVolume() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
 //   security_groups = ["default"]
-//   block_device {
-//     uuid = "%s"
-//     source_type = "image"
-//     destination_type = "local"
-//     boot_index = 0
-// 		delete_on_termination = true
-// 		device_type = "disk"
-// 		disk_bus = "virtio"
-//   }
-//   block_device {
-//     source_type = "blank"
-//     destination_type = "volume"
-//     volume_size = 1
-//     boot_index = 1
-// 		delete_on_termination = true
-// 		device_type = "disk"
-// 		disk_bus = "virtio"
-//   }
+  block_device {
+    uuid = "%s"
+    source_type = "image"
+    destination_type = "local"
+    boot_index = 0
+    delete_on_termination = true
+  }
+  block_device {
+    source_type = "blank"
+    destination_type = "volume"
+    volume_size = 1
+    boot_index = 1
+    delete_on_termination = true
+  }
 //   network {
 //     uuid = "%s"
 //   }
-// }
-// `, osImageID, osNetworkID)
-// }
+network_mode = "none"
+}
+`, osImageID, osNetworkID)
+}
+
+func testAccComputeInstanceBlockDeviceNewVolumeTypeAndBus() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
+//   security_groups = ["default"]
+  block_device {
+    uuid = "%s"
+    source_type = "image"
+    destination_type = "local"
+    boot_index = 0
+		delete_on_termination = true
+		device_type = "disk"
+		disk_bus = "virtio"
+  }
+  block_device {
+    source_type = "blank"
+    destination_type = "volume"
+    volume_size = 1
+    boot_index = 1
+		delete_on_termination = true
+		device_type = "disk"
+		disk_bus = "virtio"
+  }
+//   network {
+//     uuid = "%s"
+//   }
+network_mode = "none"
+}
+`, osImageID, osNetworkID)
+}
 
 // func testAccComputeInstanceBlockDeviceExistingVolume() string {
 // 	return fmt.Sprintf(`

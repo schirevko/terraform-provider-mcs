@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -31,7 +32,7 @@ func resourceComputeInstance() *schema.Resource {
 		// },
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
-			// Update: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
 			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
@@ -213,65 +214,65 @@ func resourceComputeInstance() *schema.Resource {
 			// 	Optional: true,
 			// 	ForceNew: true,
 			// },
-			// "block_device": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"source_type": {
-			// 				Type:     schema.TypeString,
-			// 				Required: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"uuid": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"volume_size": {
-			// 				Type:     schema.TypeInt,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"destination_type": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"boot_index": {
-			// 				Type:     schema.TypeInt,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"delete_on_termination": {
-			// 				Type:     schema.TypeBool,
-			// 				Optional: true,
-			// 				Default:  false,
-			// 				ForceNew: true,
-			// 			},
-			// 			"guest_format": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"volume_type": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"device_type": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 			"disk_bus": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"block_device": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"source_type": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"uuid": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"volume_size": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							ForceNew: true,
+						},
+						"destination_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"boot_index": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							ForceNew: true,
+						},
+						"delete_on_termination": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							ForceNew: true,
+						},
+						"guest_format": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"volume_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"device_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"disk_bus": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
 			// "scheduler_hints": {
 			// 	Type:     schema.TypeSet,
 			// 	Optional: true,
@@ -437,9 +438,9 @@ func resourceComputeInstanceCreate(ctx context.Context, d *schema.ResourceData, 
 
 	// determine if block_device configuration is correct
 	// this includes valid combinations and required attributes
-	// if err := checkBlockDeviceConfig(d); err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	if err := checkBlockDeviceConfig(d); err != nil {
+		return diag.FromErr(err)
+	}
 
 	if networkMode := d.Get("network_mode").(string); networkMode == "auto" || networkMode == "none" {
 		// Use special string for network option
@@ -495,25 +496,17 @@ func resourceComputeInstanceCreate(ctx context.Context, d *schema.ResourceData, 
 	// 	}
 	// }
 
-	// if vL, ok := d.GetOk("block_device"); ok {
-	// 	blockDevices, err := resourceInstanceBlockDevicesV2(d, vL.([]interface{}))
-	// 	if err != nil {
-	// 		return diag.FromErr(err)
-	// 	}
+	if vL, ok := d.GetOk("block_device"); ok {
+		blockDevices, err := resourceInstanceBlockDevicesV2(d, vL.([]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	// 	// Check if VolumeType was set in any of the Block Devices.
-	// 	// If so, set the client's microversion appropriately.
-	// 	for _, bd := range blockDevices {
-	// 		if bd.VolumeType != "" {
-	// 			computeClient.Microversion = ComputeInstanceBlockDeviceVolumeTypeMicroversion
-	// 		}
-	// 	}
-
-	// 	createOpts = &bootfromvolume.CreateOptsExt{
-	// 		CreateOptsBuilder: createOpts,
-	// 		BlockDevice:       blockDevices,
-	// 	}
-	// }
+		createOpts = &bootfromvolume.CreateOptsExt{
+			CreateOptsBuilder: createOpts,
+			BlockDevice:       blockDevices,
+		}
+	}
 
 	// schedulerHintsRaw := d.Get("scheduler_hints").(*schema.Set).List()
 	// if len(schedulerHintsRaw) > 0 {
@@ -530,12 +523,11 @@ func resourceComputeInstanceCreate(ctx context.Context, d *schema.ResourceData, 
 	// If a block_device is used, use the bootfromvolume.Create function as it allows an empty ImageRef.
 	// Otherwise, use the normal servers.Create function.
 	var server *servers.Server
-	// if _, ok := d.GetOk("block_device"); ok {
-	// 	server, err = bootfromvolume.Create(computeClient, createOpts).Extract()
-	// } else {
-	// 	server, err = servers.Create(computeClient, createOpts).Extract()
-	// }
-	server, err = servers.Create(computeClient, createOpts).Extract()
+	if _, ok := d.GetOk("block_device"); ok {
+		server, err = bootfromvolume.Create(computeClient, createOpts).Extract()
+	} else {
+		server, err = servers.Create(computeClient, createOpts).Extract()
+	}
 
 	if err != nil {
 		return diag.Errorf("Error creating OpenStack server: %s", err)
@@ -1238,49 +1230,48 @@ func ServerStateRefreshFunc(client *gophercloud.ServiceClient, instanceID string
 // 	return m
 // }
 
-// func resourceInstanceBlockDevicesV2(_ *schema.ResourceData, bds []interface{}) ([]bootfromvolume.BlockDevice, error) {
-// 	blockDeviceOpts := make([]bootfromvolume.BlockDevice, len(bds))
-// 	for i, bd := range bds {
-// 		bdM := bd.(map[string]interface{})
-// 		blockDeviceOpts[i] = bootfromvolume.BlockDevice{
-// 			UUID:                bdM["uuid"].(string),
-// 			VolumeSize:          bdM["volume_size"].(int),
-// 			BootIndex:           bdM["boot_index"].(int),
-// 			DeleteOnTermination: bdM["delete_on_termination"].(bool),
-// 			GuestFormat:         bdM["guest_format"].(string),
-// 			VolumeType:          bdM["volume_type"].(string),
-// 			DeviceType:          bdM["device_type"].(string),
-// 			DiskBus:             bdM["disk_bus"].(string),
-// 		}
+func resourceInstanceBlockDevicesV2(_ *schema.ResourceData, bds []interface{}) ([]bootfromvolume.BlockDevice, error) {
+	blockDeviceOpts := make([]bootfromvolume.BlockDevice, len(bds))
+	for i, bd := range bds {
+		bdM := bd.(map[string]interface{})
+		blockDeviceOpts[i] = bootfromvolume.BlockDevice{
+			UUID:                bdM["uuid"].(string),
+			VolumeSize:          bdM["volume_size"].(int),
+			BootIndex:           bdM["boot_index"].(int),
+			DeleteOnTermination: bdM["delete_on_termination"].(bool),
+			GuestFormat:         bdM["guest_format"].(string),
+			VolumeType:          bdM["volume_type"].(string),
+			DeviceType:          bdM["device_type"].(string),
+			DiskBus:             bdM["disk_bus"].(string),
+		}
+		sourceType := bdM["source_type"].(string)
+		switch sourceType {
+		case "blank":
+			blockDeviceOpts[i].SourceType = bootfromvolume.SourceBlank
+		case "image":
+			blockDeviceOpts[i].SourceType = bootfromvolume.SourceImage
+		case "snapshot":
+			blockDeviceOpts[i].SourceType = bootfromvolume.SourceSnapshot
+		case "volume":
+			blockDeviceOpts[i].SourceType = bootfromvolume.SourceVolume
+		default:
+			return blockDeviceOpts, fmt.Errorf("unknown block device source type %s", sourceType)
+		}
 
-// 		sourceType := bdM["source_type"].(string)
-// 		switch sourceType {
-// 		case "blank":
-// 			blockDeviceOpts[i].SourceType = bootfromvolume.SourceBlank
-// 		case "image":
-// 			blockDeviceOpts[i].SourceType = bootfromvolume.SourceImage
-// 		case "snapshot":
-// 			blockDeviceOpts[i].SourceType = bootfromvolume.SourceSnapshot
-// 		case "volume":
-// 			blockDeviceOpts[i].SourceType = bootfromvolume.SourceVolume
-// 		default:
-// 			return blockDeviceOpts, fmt.Errorf("unknown block device source type %s", sourceType)
-// 		}
+		destinationType := bdM["destination_type"].(string)
+		switch destinationType {
+		case "local":
+			blockDeviceOpts[i].DestinationType = bootfromvolume.DestinationLocal
+		case "volume":
+			blockDeviceOpts[i].DestinationType = bootfromvolume.DestinationVolume
+		default:
+			return blockDeviceOpts, fmt.Errorf("unknown block device destination type %s", destinationType)
+		}
+	}
 
-// 		destinationType := bdM["destination_type"].(string)
-// 		switch destinationType {
-// 		case "local":
-// 			blockDeviceOpts[i].DestinationType = bootfromvolume.DestinationLocal
-// 		case "volume":
-// 			blockDeviceOpts[i].DestinationType = bootfromvolume.DestinationVolume
-// 		default:
-// 			return blockDeviceOpts, fmt.Errorf("unknown block device destination type %s", destinationType)
-// 		}
-// 	}
-
-// 	log.Printf("[DEBUG] Block Device Options: %+v", blockDeviceOpts)
-// 	return blockDeviceOpts, nil
-// }
+	log.Printf("[DEBUG] Block Device Options: %+v", blockDeviceOpts)
+	return blockDeviceOpts, nil
+}
 
 // func resourceInstanceSchedulerHintsV2(_ *schema.ResourceData, schedulerHintsRaw map[string]interface{}) schedulerhints.SchedulerHints {
 // 	differentHost := []string{}
@@ -1371,19 +1362,19 @@ func getImageIDFromConfig(imageClient *gophercloud.ServiceClient, d *schema.Reso
 func setImageInformation(computeClient *gophercloud.ServiceClient, server *servers.Server, d *schema.ResourceData) error {
 	// If block_device was used, an Image does not need to be specified, unless an image/local
 	// combination was used. This emulates normal boot behavior. Otherwise, ignore the image altogether.
-	// if vL, ok := d.GetOk("block_device"); ok {
-	// 	needImage := false
-	// 	for _, v := range vL.([]interface{}) {
-	// 		vM := v.(map[string]interface{})
-	// 		if vM["source_type"] == "image" && vM["destination_type"] == "local" {
-	// 			needImage = true
-	// 		}
-	// 	}
-	// 	if !needImage {
-	// 		d.Set("image_id", "Attempt to boot from volume - no image supplied")
-	// 		return nil
-	// 	}
-	// }
+	if vL, ok := d.GetOk("block_device"); ok {
+		needImage := false
+		for _, v := range vL.([]interface{}) {
+			vM := v.(map[string]interface{})
+			if vM["source_type"] == "image" && vM["destination_type"] == "local" {
+				needImage = true
+			}
+		}
+		if !needImage {
+			d.Set("image_id", "Attempt to boot from volume - no image supplied")
+			return nil
+		}
+	}
 
 	if server.Image["id"] != nil {
 		imageID := server.Image["id"].(string)
@@ -1472,31 +1463,31 @@ func getFlavorID(computeClient *gophercloud.ServiceClient, d *schema.ResourceDat
 // 	return hashcode.String(buf.String())
 // }
 
-// func checkBlockDeviceConfig(d *schema.ResourceData) error {
-// 	if vL, ok := d.GetOk("block_device"); ok {
-// 		for _, v := range vL.([]interface{}) {
-// 			vM := v.(map[string]interface{})
+func checkBlockDeviceConfig(d *schema.ResourceData) error {
+	if vL, ok := d.GetOk("block_device"); ok {
+		for _, v := range vL.([]interface{}) {
+			vM := v.(map[string]interface{})
 
-// 			if vM["source_type"] != "blank" && vM["uuid"] == "" {
-// 				return fmt.Errorf("You must specify a uuid for %s block device types", vM["source_type"])
-// 			}
+			if vM["source_type"] != "blank" && vM["uuid"] == "" {
+				return fmt.Errorf("You must specify a uuid for %s block device types", vM["source_type"])
+			}
 
-// 			if vM["source_type"] == "image" && vM["destination_type"] == "volume" {
-// 				if vM["volume_size"] == 0 {
-// 					return fmt.Errorf("You must specify a volume_size when creating a volume from an image")
-// 				}
-// 			}
+			if vM["source_type"] == "image" && vM["destination_type"] == "volume" {
+				if vM["volume_size"] == 0 {
+					return fmt.Errorf("You must specify a volume_size when creating a volume from an image")
+				}
+			}
 
-// 			if vM["source_type"] == "blank" && vM["destination_type"] == "local" {
-// 				if vM["volume_size"] == 0 {
-// 					return fmt.Errorf("You must specify a volume_size when creating a blank block device")
-// 				}
-// 			}
-// 		}
-// 	}
+			if vM["source_type"] == "blank" && vM["destination_type"] == "local" {
+				if vM["volume_size"] == 0 {
+					return fmt.Errorf("You must specify a volume_size when creating a blank block device")
+				}
+			}
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // func resourceComputeInstancePersonalityHash(v interface{}) int {
 // 	var buf bytes.Buffer
