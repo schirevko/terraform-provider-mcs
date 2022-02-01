@@ -548,10 +548,7 @@ func TestAccComputeInstance_blockDeviceNewVolumeTypeAndBus(t *testing.T) {
 // func TestAccComputeInstance_networkModeAuto(t *testing.T) {
 // 	var instance servers.Server
 // 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
+// 		PreCheck:          func() { testAccPreCheckCompute(t) },
 // 		ProviderFactories: testAccProviders,
 // 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
 // 		Steps: []resource.TestStep{
@@ -566,35 +563,29 @@ func TestAccComputeInstance_blockDeviceNewVolumeTypeAndBus(t *testing.T) {
 // 	})
 // }
 
-// func TestAccComputeInstance_networkModeNone(t *testing.T) {
-// 	var instance servers.Server
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
-// 		ProviderFactories: testAccProviders,
-// 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccComputeInstanceNetworkModeNone(),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
-// 					testAccCheckComputeInstanceNetworkDoesNotExist("mcs_compute_instance.instance_1", &instance),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccComputeInstance_networkModeNone(t *testing.T) {
+	var instance servers.Server
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheckCompute(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckComputeInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeInstanceNetworkModeNone(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists("mcs_compute_instance.instance_1", &instance),
+					testAccCheckComputeInstanceNetworkDoesNotExist("mcs_compute_instance.instance_1", &instance),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccComputeInstance_networkNameToID(t *testing.T) {
 // 	var instance servers.Server
 // 	var network networks.Network
 // 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			testAccPreCheck(t)
-// 			testAccPreCheckNonAdminOnly(t)
-// 		},
+// 		PreCheck:          func() { testAccPreCheckCompute(t) },
 // 		ProviderFactories: testAccProviders,
 // 		CheckDestroy:      testAccCheckComputeInstanceDestroy,
 // 		Steps: []resource.TestStep{
@@ -924,72 +915,63 @@ func testAccCheckComputeInstanceInstanceIDsDoNotMatch(
 // 	}
 // }
 
-// func testAccCheckComputeInstanceNetworkExists(n string, _ *servers.Server) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		rs, ok := s.RootModule().Resources[n]
+func testAccCheckComputeInstanceNetworkExists(n string, _ *servers.Server) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
 
-// 		if !ok {
-// 			return fmt.Errorf("resource not found: %s", n)
-// 		}
+		if !ok {
+			return fmt.Errorf("resource not found: %s", n)
+		}
 
-// 		networkCount, ok := rs.Primary.Attributes["network.#"]
+		networkCount, ok := rs.Primary.Attributes["network.#"]
 
-// 		if !ok {
-// 			return fmt.Errorf("network attributes not found: %s", n)
-// 		}
+		if !ok {
+			return fmt.Errorf("network attributes not found: %s", n)
+		}
 
-// 		if networkCount != "1" {
-// 			return fmt.Errorf("network should be exists when network mode 'auto': %s", n)
-// 		}
+		if networkCount != "1" {
+			return fmt.Errorf("network should be exists when network mode 'auto': %s", n)
+		}
 
-// 		return nil
-// 	}
-// }
+		return nil
+	}
+}
 
-// func testAccCheckComputeInstanceNetworkDoesNotExist(n string, _ *servers.Server) resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		rs, ok := s.RootModule().Resources[n]
+func testAccCheckComputeInstanceNetworkDoesNotExist(n string, _ *servers.Server) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
 
-// 		if !ok {
-// 			return fmt.Errorf("resource not found: %s", n)
-// 		}
+		if !ok {
+			return fmt.Errorf("resource not found: %s", n)
+		}
 
-// 		networkCount, ok := rs.Primary.Attributes["network.#"]
+		networkCount, ok := rs.Primary.Attributes["network.#"]
 
-// 		if !ok {
-// 			return fmt.Errorf("network attributes not found: %s", n)
-// 		}
+		if !ok {
+			return fmt.Errorf("network attributes not found: %s", n)
+		}
 
-// 		if networkCount != "0" {
-// 			return fmt.Errorf("network should not exists when network mode 'none': %s", n)
-// 		}
+		if networkCount != "0" {
+			return fmt.Errorf("network should not exists when network mode 'none': %s", n)
+		}
 
-// 		return nil
-// 	}
-// }
-
-// func testAccComputeInstanceBasic() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
-//   security_groups = ["default"]
-//   metadata = {
-//     foo = "bar"
-//   }
-//   network {
-//     uuid = "%s"
-//   }
-// }
-// `, osNetworkID)
-// }
+		return nil
+	}
+}
 
 func testAccComputeInstanceBasic() string {
 	return fmt.Sprintf(`
 resource "mcs_compute_instance" "instance_1" {
   name = "instance_1"
-  network_mode = "none"
-
-}`)
+//   security_groups = ["default"]
+//   metadata = {
+//     foo = "bar"
+//   }
+  network {
+    uuid = "%s"
+  }
+}
+`, osNetworkID)
 }
 
 // func testAccComputeInstanceSecgroupMulti() string {
@@ -1096,10 +1078,9 @@ resource "mcs_compute_instance" "instance_1" {
     destination_type = "volume"
     delete_on_termination = true
   }
-//   network {
-//     uuid = "%s"
-//   }
-network_mode = "none"
+  network {
+    uuid = "%s"
+  }
 }
 `, osImageID, osNetworkID)
 }
@@ -1122,10 +1103,10 @@ network_mode = "none"
 // //     destination_type = "volume"
 // //     delete_on_termination = true
 // //   }
-// // //   network {
-// // //     uuid = "%s"
-// // //   }
-// // 	network_mode="none"
+// //   network {
+// //     uuid = "%s"
+// //   }
+
 // // }
 // // `, osImageID, osNetworkID)
 // }
@@ -1143,10 +1124,9 @@ resource "mcs_compute_instance" "instance_1" {
     destination_type = "volume"
     delete_on_termination = true
   }
-//   network {
-//     uuid = "%s"
-//   }
-network_mode = "none"
+  network {
+    uuid = "%s"
+  }
 }
 `, osImageID, osNetworkID)
 }
@@ -1164,10 +1144,9 @@ resource "mcs_compute_instance" "instance_1" {
     destination_type = "volume"
     delete_on_termination = true
   }
-//   network {
-//     uuid = "%s"
-//   }
-network_mode = "none"
+  network {
+    uuid = "%s"
+  }
 }
 `, osImageID, osNetworkID)
 }
@@ -1191,10 +1170,9 @@ resource "mcs_compute_instance" "instance_1" {
     boot_index = 1
     delete_on_termination = true
   }
-//   network {
-//     uuid = "%s"
-//   }
-network_mode = "none"
+  network {
+    uuid = "%s"
+  }
 }
 `, osImageID, osNetworkID)
 }
@@ -1222,10 +1200,9 @@ resource "mcs_compute_instance" "instance_1" {
 		device_type = "disk"
 		disk_bus = "virtio"
   }
-//   network {
-//     uuid = "%s"
-//   }
-network_mode = "none"
+  network {
+    uuid = "%s"
+  }
 }
 `, osImageID, osNetworkID)
 }
@@ -1470,25 +1447,25 @@ network_mode = "none"
 // `, osNetworkID)
 // }
 
-// func testAccComputeInstanceNetworkModeAuto() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "instance_1"
+func testAccComputeInstanceNetworkModeAuto() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "instance_1"
 
-//   network_mode = "auto"
-// }
-// `)
-// }
+  network_mode = "auto"
+}
+`)
+}
 
-// func testAccComputeInstanceNetworkModeNone() string {
-// 	return fmt.Sprintf(`
-// resource "mcs_compute_instance" "instance_1" {
-//   name = "test-instance-1"
+func testAccComputeInstanceNetworkModeNone() string {
+	return fmt.Sprintf(`
+resource "mcs_compute_instance" "instance_1" {
+  name = "test-instance-1"
 
-//   network_mode = "none"
-// }
-// `)
-// }
+  network_mode = "none"
+}
+`)
+}
 
 // func testAccComputeInstanceNetworkNameToID() string {
 // 	return fmt.Sprintf(`

@@ -364,13 +364,13 @@ The following arguments are supported:
     the server. Conflicts with `availability_zone_hints`. Changing this creates
     a new server. -->
 
-<!-- * `network` - (Optional) An array of one or more networks to attach to the
+* `network` - (Optional) An array of one or more networks to attach to the
     instance. The network object structure is documented below. Changing this
     creates a new server.
 
 * `network_mode` - (Optional) Special string for `network` option to create
   the server. `network_mode` can be `"auto"` or `"none"`.
-  Please see the following [reference](https://docs.openstack.org/api-ref/compute/?expanded=create-server-detail#id11) for more information. Conflicts with `network`. -->
+  Please see the following [reference](https://docs.openstack.org/api-ref/compute/?expanded=create-server-detail#id11) for more information. Conflicts with `network`.
 
 <!-- * `metadata` - (Optional) Metadata key/value pairs to make available from
     within the instance. Changing this updates the existing server metadata.
@@ -418,7 +418,7 @@ The following arguments are supported:
 * `vendor_options` - (Optional) Map of additional vendor-specific options.
     Supported options are described below.
 
-<!-- The `network` block supports:
+The `network` block supports:
 
 * `uuid` - (Required unless `port`  or `name` is provided) The network UUID to
     attach to the server. Changing this creates a new server.
@@ -433,9 +433,9 @@ The following arguments are supported:
     network. Changing this creates a new server.
 
 * `access_network` - (Optional) Specifies if this network should be used for
-    provisioning access. Accepts true or false. Defaults to false. -->
+    provisioning access. Accepts true or false. Defaults to false.
 
-<!-- The `block_device` block supports:
+The `block_device` block supports:
 
 * `uuid` - (Required unless `source_type` is set to `"blank"` ) The UUID of
     the image, volume, or snapshot. Changing this creates a new server.
@@ -477,7 +477,7 @@ The following arguments are supported:
 * `disk_bus` - (Optional) The low-level disk bus that will be used. Most common
     thing is to leave this empty. Changing this creates a new server.
 
-The `scheduler_hints` block supports:
+<!-- The `scheduler_hints` block supports:
 
 * `group` - (Optional) A UUID of a Server Group. The instance will be placed
     into that group.

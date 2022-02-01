@@ -73,12 +73,6 @@ func resourceComputeInstance() *schema.Resource {
 				ForceNew: false,
 				Computed: true,
 			},
-			// "floating_ip": {
-			// 	Type:       schema.TypeString,
-			// 	Optional:   true,
-			// 	ForceNew:   false,
-			// 	Deprecated: "Use the openstack_compute_floatingip_associate_v2 resource instead",
-			// },
 			// "user_data": {
 			// 	Type:     schema.TypeString,
 			// 	Optional: true,
@@ -126,61 +120,55 @@ func resourceComputeInstance() *schema.Resource {
 					"auto", "none",
 				}, true),
 			},
-			// "network": {
-			// 	Type:     schema.TypeList,
-			// 	Optional: true,
-			// 	ForceNew: true,
-			// 	Computed: true,
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"uuid": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 				Computed: true,
-			// 			},
-			// 			"name": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 				Computed: true,
-			// 			},
-			// 			"port": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 				Computed: true,
-			// 			},
-			// 			"fixed_ip_v4": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 				Computed: true,
-			// 			},
-			// 			"fixed_ip_v6": {
-			// 				Type:     schema.TypeString,
-			// 				Optional: true,
-			// 				ForceNew: true,
-			// 				Computed: true,
-			// 			},
-			// 			"floating_ip": {
-			// 				Type:       schema.TypeString,
-			// 				Optional:   true,
-			// 				Computed:   true,
-			// 				Deprecated: "Use the openstack_compute_floatingip_associate_v2 resource instead",
-			// 			},
-			// 			"mac": {
-			// 				Type:     schema.TypeString,
-			// 				Computed: true,
-			// 			},
-			// 			"access_network": {
-			// 				Type:     schema.TypeBool,
-			// 				Optional: true,
-			// 				Default:  false,
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"network": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"uuid": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+						"port": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+						"fixed_ip_v4": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+						"fixed_ip_v6": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+						"mac": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"access_network": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+					},
+				},
+			},
 			// "metadata": {
 			// 	Type:     schema.TypeMap,
 			// 	Optional: true,
@@ -197,18 +185,18 @@ func resourceComputeInstance() *schema.Resource {
 			// 	Sensitive: true,
 			// 	ForceNew:  false,
 			// },
-			// "access_ip_v4": {
-			// 	Type:     schema.TypeString,
-			// 	Computed: true,
-			// 	Optional: true,
-			// 	ForceNew: false,
-			// },
-			// "access_ip_v6": {
-			// 	Type:     schema.TypeString,
-			// 	Computed: true,
-			// 	Optional: true,
-			// 	ForceNew: false,
-			// },
+			"access_ip_v4": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+				ForceNew: false,
+			},
+			"access_ip_v6": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+				ForceNew: false,
+			},
 			// "key_pair": {
 			// 	Type:     schema.TypeString,
 			// 	Optional: true,
@@ -446,19 +434,18 @@ func resourceComputeInstanceCreate(ctx context.Context, d *schema.ResourceData, 
 		// Use special string for network option
 		networks = networkMode
 		log.Printf("[DEBUG] Create with network options %s", networks)
-	}
-	// } else {
-	// 	log.Printf("[DEBUG] Create with specified network options")
-	// 	// Build a list of networks with the information given upon creation.
-	// 	// Error out if an invalid network configuration was used.
-	// 	allInstanceNetworks, err := getAllInstanceNetworks(d, meta)
-	// 	if err != nil {
-	// 		return diag.FromErr(err)
-	// 	}
+	} else {
+		log.Printf("[DEBUG] Create with specified network options")
+		// Build a list of networks with the information given upon creation.
+		// Error out if an invalid network configuration was used.
+		allInstanceNetworks, err := getAllInstanceNetworks(d, meta)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	// 	// Build a []servers.Network to pass into the create options.
-	// 	networks = expandInstanceNetworks(allInstanceNetworks)
-	// }
+		// Build a []servers.Network to pass into the create options.
+		networks = expandInstanceNetworks(allInstanceNetworks)
+	}
 
 	// configDrive := d.Get("config_drive").(bool)
 
@@ -609,44 +596,44 @@ func resourceComputeInstanceRead(_ context.Context, d *schema.ResourceData, meta
 	d.Set("name", server.Name)
 
 	// Get the instance network and address information
-	// networks, err := flattenInstanceNetworks(d, meta)
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	networks, err := flattenInstanceNetworks(d, meta)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	// Determine the best IPv4 and IPv6 addresses to access the instance with
-	// hostv4, hostv6 := getInstanceAccessAddresses(d, networks)
+	hostv4, hostv6 := getInstanceAccessAddresses(d, networks)
 
 	// AccessIPv4/v6 isn't standard in OpenStack, but there have been reports
 	// of them being used in some environments.
-	// if server.AccessIPv4 != "" && hostv4 == "" {
-	// 	hostv4 = server.AccessIPv4
-	// }
+	if server.AccessIPv4 != "" && hostv4 == "" {
+		hostv4 = server.AccessIPv4
+	}
 
-	// if server.AccessIPv6 != "" && hostv6 == "" {
-	// 	hostv6 = server.AccessIPv6
-	// }
+	if server.AccessIPv6 != "" && hostv6 == "" {
+		hostv6 = server.AccessIPv6
+	}
 
-	// d.Set("network", networks)
-	// d.Set("access_ip_v4", hostv4)
-	// d.Set("access_ip_v6", hostv6)
+	d.Set("network", networks)
+	d.Set("access_ip_v4", hostv4)
+	d.Set("access_ip_v6", hostv6)
 
-	// // Determine the best IP address to use for SSH connectivity.
-	// // Prefer IPv4 over IPv6.
-	// var preferredSSHAddress string
-	// if hostv4 != "" {
-	// 	preferredSSHAddress = hostv4
-	// } else if hostv6 != "" {
-	// 	preferredSSHAddress = hostv6
-	// }
+	// Determine the best IP address to use for SSH connectivity.
+	// Prefer IPv4 over IPv6.
+	var preferredSSHAddress string
+	if hostv4 != "" {
+		preferredSSHAddress = hostv4
+	} else if hostv6 != "" {
+		preferredSSHAddress = hostv6
+	}
 
-	// if preferredSSHAddress != "" {
-	// 	// Initialize the connection info
-	// 	d.SetConnInfo(map[string]string{
-	// 		"type": "ssh",
-	// 		"host": preferredSSHAddress,
-	// 	})
-	// }
+	if preferredSSHAddress != "" {
+		// Initialize the connection info
+		d.SetConnInfo(map[string]string{
+			"type": "ssh",
+			"host": preferredSSHAddress,
+		})
+	}
 
 	// d.Set("all_metadata", server.Metadata)
 
