@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud"
+	volumesV2 "github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes"
+	volumesV3 "github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
@@ -27,9 +29,9 @@ func resourceComputeInstance() *schema.Resource {
 		UpdateContext: resourceComputeInstanceUpdate,
 		DeleteContext: resourceComputeInstanceDelete,
 
-		// Importer: &schema.ResourceImporter{
-		// 	StateContext: resourceOpenStackComputeInstanceV2ImportState,
-		// },
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceComputeInstanceImportState,
+		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
 			Update: schema.DefaultTimeout(30 * time.Minute),
@@ -1070,119 +1072,85 @@ func resourceComputeInstanceDelete(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-// func resourceOpenStackComputeInstanceV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-// 	var serverWithAttachments struct {
-// 		VolumesAttached []map[string]interface{} `json:"os-extended-volumes:volumes_attached"`
-// 	}
+func resourceComputeInstanceImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	var serverWithAttachments struct {
+		VolumesAttached []map[string]interface{} `json:"os-extended-volumes:volumes_attached"`
+	}
 
-// 	config := meta.(*Config)
-// 	computeClient, err := config.ComputeV2Client(GetRegion(d, config))
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Error creating OpenStack compute client: %s", err)
-// 	}
+	config := meta.(configer)
+	computeClient, err := config.ComputeV2Client(getRegion(d, config))
+	if err != nil {
+		return nil, fmt.Errorf("Error creating OpenStack compute client: %s", err)
+	}
 
-// 	results := make([]*schema.ResourceData, 1)
-// 	diagErr := resourceComputeInstanceRead(ctx, d, meta)
-// 	if diagErr != nil {
-// 		return nil, fmt.Errorf("Error reading mcs_compute_instance %s: %v", d.Id(), diagErr)
-// 	}
+	results := make([]*schema.ResourceData, 1)
+	diagErr := resourceComputeInstanceRead(ctx, d, meta)
+	if diagErr != nil {
+		return nil, fmt.Errorf("Error reading mcs_compute_instance %s: %v", d.Id(), diagErr)
+	}
 
-// 	raw := servers.Get(computeClient, d.Id())
-// 	if raw.Err != nil {
-// 		return nil, CheckDeleted(d, raw.Err, "mcs_compute_instance")
-// 	}
+	raw := servers.Get(computeClient, d.Id())
+	if raw.Err != nil {
+		return nil, checkDeleted(d, raw.Err, "mcs_compute_instance")
+	}
 
-// 	if err := raw.ExtractInto(&serverWithAttachments); err != nil {
-// 		log.Printf("[DEBUG] unable to unmarshal raw struct to serverWithAttachments: %s", err)
-// 	}
+	if err := raw.ExtractInto(&serverWithAttachments); err != nil {
+		log.Printf("[DEBUG] unable to unmarshal raw struct to serverWithAttachments: %s", err)
+	}
 
-// 	log.Printf("[DEBUG] Retrieved mcs_compute_instance %s volume attachments: %#v",
-// 		d.Id(), serverWithAttachments)
+	log.Printf("[DEBUG] Retrieved mcs_compute_instance %s volume attachments: %#v",
+		d.Id(), serverWithAttachments)
 
-// 	bds := []map[string]interface{}{}
-// 	if len(serverWithAttachments.VolumesAttached) > 0 {
-// 		blockStorageClient, err := config.BlockStorageV2Client(GetRegion(d, config))
-// 		if err == nil {
-// 			var volMetaData = struct {
-// 				VolumeImageMetadata map[string]interface{} `json:"volume_image_metadata"`
-// 				ID                  string                 `json:"id"`
-// 				Size                int                    `json:"size"`
-// 				Bootable            string                 `json:"bootable"`
-// 			}{}
-// 			for i, b := range serverWithAttachments.VolumesAttached {
-// 				rawVolume := volumesV2.Get(blockStorageClient, b["id"].(string))
-// 				if err := rawVolume.ExtractInto(&volMetaData); err != nil {
-// 					log.Printf("[DEBUG] unable to unmarshal raw struct to volume metadata: %s", err)
-// 				}
+	bds := []map[string]interface{}{}
+	if len(serverWithAttachments.VolumesAttached) > 0 {
+		blockStorageClient, err := config.BlockStorageV3Client(getRegion(d, config))
+		if err != nil {
+			return nil, fmt.Errorf("Error creating OpenStack volume V3 client: %s", err)
+		}
+		var volMetaData = struct {
+			VolumeImageMetadata map[string]interface{} `json:"volume_image_metadata"`
+			ID                  string                 `json:"id"`
+			Size                int                    `json:"size"`
+			Bootable            string                 `json:"bootable"`
+		}{}
+		for i, b := range serverWithAttachments.VolumesAttached {
+			rawVolume := volumesV3.Get(blockStorageClient, b["id"].(string))
+			if err := rawVolume.ExtractInto(&volMetaData); err != nil {
+				log.Printf("[DEBUG] unable to unmarshal raw struct to volume metadata: %s", err)
+			}
 
-// 				log.Printf("[DEBUG] retrieved volume%+v", volMetaData)
-// 				v := map[string]interface{}{
-// 					"delete_on_termination": true,
-// 					"uuid":                  volMetaData.VolumeImageMetadata["image_id"],
-// 					"boot_index":            i,
-// 					"destination_type":      "volume",
-// 					"source_type":           "image",
-// 					"volume_size":           volMetaData.Size,
-// 					"disk_bus":              "",
-// 					"volume_type":           "",
-// 					"device_type":           "",
-// 				}
+			log.Printf("[DEBUG] retrieved volume%+v", volMetaData)
+			v := map[string]interface{}{
+				"delete_on_termination": true,
+				"uuid":                  volMetaData.VolumeImageMetadata["image_id"],
+				"boot_index":            i,
+				"destination_type":      "volume",
+				"source_type":           "image",
+				"volume_size":           volMetaData.Size,
+				"disk_bus":              "",
+				"volume_type":           "",
+				"device_type":           "",
+			}
 
-// 				if volMetaData.Bootable == "true" {
-// 					bds = append(bds, v)
-// 				}
-// 			}
-// 		} else {
-// 			log.Print("[DEBUG] Could not create BlockStorageV2 client, trying BlockStorageV3")
-// 			blockStorageClient, err := config.BlockStorageV3Client(GetRegion(d, config))
-// 			if err != nil {
-// 				return nil, fmt.Errorf("Error creating OpenStack volume V3 client: %s", err)
-// 			}
-// 			var volMetaData = struct {
-// 				VolumeImageMetadata map[string]interface{} `json:"volume_image_metadata"`
-// 				ID                  string                 `json:"id"`
-// 				Size                int                    `json:"size"`
-// 				Bootable            string                 `json:"bootable"`
-// 			}{}
-// 			for i, b := range serverWithAttachments.VolumesAttached {
-// 				rawVolume := volumesV3.Get(blockStorageClient, b["id"].(string))
-// 				if err := rawVolume.ExtractInto(&volMetaData); err != nil {
-// 					log.Printf("[DEBUG] unable to unmarshal raw struct to volume metadata: %s", err)
-// 				}
+			if volMetaData.Bootable == "true" {
+				bds = append(bds, v)
+			}
+		}
 
-// 				log.Printf("[DEBUG] retrieved volume%+v", volMetaData)
-// 				v := map[string]interface{}{
-// 					"delete_on_termination": true,
-// 					"uuid":                  volMetaData.VolumeImageMetadata["image_id"],
-// 					"boot_index":            i,
-// 					"destination_type":      "volume",
-// 					"source_type":           "image",
-// 					"volume_size":           volMetaData.Size,
-// 					"disk_bus":              "",
-// 					"volume_type":           "",
-// 					"device_type":           "",
-// 				}
+		d.Set("block_device", bds)
+	}
 
-// 				if volMetaData.Bootable == "true" {
-// 					bds = append(bds, v)
-// 				}
-// 			}
-// 		}
+	// metadata, err := servers.Metadata(computeClient, d.Id()).Extract()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("Unable to read metadata for mcs_compute_instance %s: %s", d.Id(), err)
+	// }
 
-// 		d.Set("block_device", bds)
-// 	}
+	// d.Set("metadata", metadata)
 
-// 	metadata, err := servers.Metadata(computeClient, d.Id()).Extract()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Unable to read metadata for mcs_compute_instance %s: %s", d.Id(), err)
-// 	}
+	results[0] = d
 
-// 	d.Set("metadata", metadata)
-
-// 	results[0] = d
-
-// 	return results, nil
-// }
+	return results, nil
+}
 
 // ServerStateRefreshFunc returns a resource.StateRefreshFunc that is used to watch
 // an OpenStack instance.

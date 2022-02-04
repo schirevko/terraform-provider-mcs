@@ -26,6 +26,7 @@ type configer interface {
 	ComputeV2Client(region string) (*gophercloud.ServiceClient, error)
 	ImageV2Client(region string) (*gophercloud.ServiceClient, error)
 	NetworkingV2Client(region string) (*gophercloud.ServiceClient, error)
+	BlockStorageV3Client(region string) (*gophercloud.ServiceClient, error)
 }
 
 // config uses openstackbase.Config as the base/foundation of this provider's
@@ -50,6 +51,10 @@ func (c *config) ImageV2Client(region string) (*gophercloud.ServiceClient, error
 
 func (c *config) NetworkingV2Client(region string) (*gophercloud.ServiceClient, error) {
 	return c.Config.NetworkingV2Client(region)
+}
+
+func (c *config) BlockStorageV3Client(region string) (*gophercloud.ServiceClient, error) {
+	return c.Config.BlockStorageV3Client(region)
 }
 
 func newConfig(d *schema.ResourceData, terraformVersion string) (configer, error) {

@@ -552,7 +552,7 @@ The following attributes are exported:
 * `all_tags` - The collection of tags assigned on the instance, which have
     been explicitly and implicitly added.
 
-<!-- ## Notes
+## Notes
 
 ### Multiple Ephemeral Disks
 
@@ -695,9 +695,9 @@ Expected HTTP response code [201 202] when accessing [POST https://example.com:8
 * If you intend to use the `openstack_compute_interface_attach_v2` resource,
 you still need to make sure one of the above points is satisfied. An instance
 cannot be created without a valid network configuration even if you intend to
-use `openstack_compute_interface_attach_v2` after the instance has been created. -->
+use `openstack_compute_interface_attach_v2` after the instance has been created.
 
-<!-- ## Importing instances
+## Importing instances
 
 Importing instances can be tricky, since the nova api does not offer all
 information provided at creation time for later retrieval.
@@ -835,4 +835,4 @@ terraform import openstack_compute_volume_attach_v2.va_1
   delete_on_termination flag, and always assumes true. If you
   import an instance created with delete_on_termination false,
   you end up with "orphaned" volumes after destruction of
-  instances. -->
+  instances.
