@@ -1,11 +1,11 @@
 ---
-layout: "mcs"
-page_title: "mcs: compute_instance"
+layout: "vkcs"
+page_title: "vkcs: compute_instance"
 description: |-
   Manages a compute VM instance.
 ---
 
-# mcs\_compute\_instance
+# vkcs\_compute\_instance
 
 Manages a compute VM instance resource.
 
@@ -18,7 +18,7 @@ state](https://www.terraform.io/docs/language/state/sensitive-data.html).
 ### Basic Instance
 
 ```hcl
-resource "mcs_compute_instance" "basic" {
+resource "vkcs_compute_instance" "basic" {
   name            = "basic"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -43,7 +43,7 @@ resource "openstack_blockstorage_volume_v2" "myvol" {
   size = 1
 }
 
-resource "mcs_compute_instance" "myinstance" {
+resource "vkcs_compute_instance" "myinstance" {
   name            = "myinstance"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -56,7 +56,7 @@ resource "mcs_compute_instance" "myinstance" {
 }
 
 resource "openstack_compute_volume_attach_v2" "attached" {
-  instance_id = "${mcs_compute_instance.myinstance.id}"
+  instance_id = "${vkcs_compute_instance.myinstance.id}"
   volume_id   = "${openstack_blockstorage_volume_v2.myvol.id}"
 }
 ```
@@ -64,7 +64,7 @@ resource "openstack_compute_volume_attach_v2" "attached" {
 ### Boot From Volume
 
 ```hcl
-resource "mcs_compute_instance" "boot-from-volume" {
+resource "vkcs_compute_instance" "boot-from-volume" {
   name            = "boot-from-volume"
   flavor_id       = "3"
   key_pair        = "my_key_pair_name"
@@ -94,7 +94,7 @@ resource "openstack_blockstorage_volume_v1" "myvol" {
   image_id = "<image-id>"
 }
 
-resource "mcs_compute_instance" "boot-from-volume" {
+resource "vkcs_compute_instance" "boot-from-volume" {
   name            = "bootfromvolume"
   flavor_id       = "3"
   key_pair        = "my_key_pair_name"
@@ -117,7 +117,7 @@ resource "mcs_compute_instance" "boot-from-volume" {
 ### Boot Instance, Create Volume, and Attach Volume as a Block Device
 
 ```hcl
-resource "mcs_compute_instance" "instance_1" {
+resource "vkcs_compute_instance" "instance_1" {
   name            = "instance_1"
   image_id        = "<image-id>"
   flavor_id       = "3"
@@ -150,7 +150,7 @@ resource "openstack_blockstorage_volume_v2" "volume_1" {
   size = 1
 }
 
-resource "mcs_compute_instance" "instance_1" {
+resource "vkcs_compute_instance" "instance_1" {
   name            = "instance_1"
   image_id        = "<image-id>"
   flavor_id       = "3"
@@ -182,7 +182,7 @@ resource "openstack_networking_floatingip_v2" "myip" {
   pool = "my_pool"
 }
 
-resource "mcs_compute_instance" "multi-net" {
+resource "vkcs_compute_instance" "multi-net" {
   name            = "multi-net"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -200,15 +200,15 @@ resource "mcs_compute_instance" "multi-net" {
 
 resource "openstack_compute_floatingip_associate_v2" "myip" {
   floating_ip = "${openstack_networking_floatingip_v2.myip.address}"
-  instance_id = "${mcs_compute_instance.multi-net.id}"
-  fixed_ip    = "${mcs_compute_instance.multi-net.network.1.fixed_ip_v4}"
+  instance_id = "${vkcs_compute_instance.multi-net.id}"
+  fixed_ip    = "${vkcs_compute_instance.multi-net.network.1.fixed_ip_v4}"
 }
 ```
 
 ### Instance With Personality
 
 ```hcl
-resource "mcs_compute_instance" "personality" {
+resource "vkcs_compute_instance" "personality" {
   name            = "personality"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -229,7 +229,7 @@ resource "mcs_compute_instance" "personality" {
 ### Instance with Multiple Ephemeral Disks
 
 ```hcl
-resource "mcs_compute_instance" "multi-eph" {
+resource "vkcs_compute_instance" "multi-eph" {
   name            = "multi_eph"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -274,7 +274,7 @@ resource "openstack_compute_flavor_v2" "flavor-with-swap" {
   swap  = "4096"
 }
 
-resource "mcs_compute_instance" "vm-swap" {
+resource "vkcs_compute_instance" "vm-swap" {
   name            = "vm_swap"
   flavor_id       = "${openstack_compute_flavor_v2.flavor-with-swap.id}"
   key_pair        = "my_key_pair_name"
@@ -302,7 +302,7 @@ resource "mcs_compute_instance" "vm-swap" {
 ### Instance with User Data (cloud-init)
 
 ```hcl
-resource "mcs_compute_instance" "instance_1" {
+resource "vkcs_compute_instance" "instance_1" {
   name            = "basic"
   image_id        = "ad091b52-742f-469e-8f3c-fd81cadf0743"
   flavor_id       = "3"
@@ -565,7 +565,7 @@ The following example shows how to create an instance with multiple ephemeral
 disks:
 
 ```hcl
-resource "mcs_compute_instance" "foo" {
+resource "vkcs_compute_instance" "foo" {
   name            = "terraform-test"
   security_groups = ["default"]
 
@@ -610,7 +610,7 @@ resource "openstack_networking_secgroup_v2" "sg_1" {
   name = "sg_1"
 }
 
-resource "mcs_compute_instance" "foo" {
+resource "vkcs_compute_instance" "foo" {
   name            = "terraform-test"
   security_groups = ["${openstack_networking_secgroup_v2.sg_1.name}"]
 }
@@ -652,7 +652,7 @@ resource "openstack_networking_port_v2" "port_1" {
   ]
 }
 
-resource "mcs_compute_instance" "instance_1" {
+resource "vkcs_compute_instance" "instance_1" {
   name = "instance_1"
 
   network {
@@ -687,7 +687,7 @@ with a `network` block. Not specifying a network will result in the following
 error:
 
 ```
-* mcs_compute_instance.instance: Error creating OpenStack server:
+* vkcs_compute_instance.instance: Error creating OpenStack server:
 Expected HTTP response code [201 202] when accessing [POST https://example.com:8774/v2.1/servers], but got 409 instead
 {"conflictingRequest": {"message": "Multiple possible networks found, use a Network ID to be more specific.", "code": 409}}
 ```
@@ -711,7 +711,7 @@ and one network interface.
 Your configuration would look like the following:
 
 ```hcl
-resource "mcs_compute_instance" "basic_instance" {
+resource "vkcs_compute_instance" "basic_instance" {
   name            = "basic"
   flavor_id       = "<flavor_id>"
   key_pair        = "<keyname>"
@@ -726,7 +726,7 @@ resource "mcs_compute_instance" "basic_instance" {
 ```
 Then you execute
 ```
-terraform import mcs_compute_instance.basic_instance <instance_id>
+terraform import vkcs_compute_instance.basic_instance <instance_id>
 ```
 
 ### Importing an instance with multiple emphemeral disks
@@ -749,7 +749,7 @@ and 3 network interfaces.
 Examples
 
 ```hcl
-resource "mcs_compute_instance" "boot-from-volume" {
+resource "vkcs_compute_instance" "boot-from-volume" {
   name            = "boot-from-volume"
   flavor_id       = "<flavor_id"
   key_pair        = "<keyname>"
@@ -793,7 +793,7 @@ Note that we only configure the bootable device as block_device.
 The other volumes can be specified as `openstack_blockstorage_volume_v2`
 
 ```hcl
-resource "mcs_compute_instance" "instance_2" {
+resource "vkcs_compute_instance" "instance_2" {
   name            = "instance_2"
   image_id        = "<image_id>"
   flavor_id       = "<flavor_id>"
@@ -818,14 +818,14 @@ resource "openstack_blockstorage_volume_v2" "volume_1" {
 }
 resource "openstack_compute_volume_attach_v2" "va_1" {
   volume_id   = "${openstack_blockstorage_volume_v2.volume_1.id}"
-  instance_id = "${mcs_compute_instance.instance_2.id}"
+  instance_id = "${vkcs_compute_instance.instance_2.id}"
 }
 ```
 To import the instance outlined in the above configuration
 do the following:
 
 ```
-terraform import mcs_compute_instance.instance_2 <instance_id>
+terraform import vkcs_compute_instance.instance_2 <instance_id>
 import openstack_blockstorage_volume_v2.volume_1 <volume_id>
 terraform import openstack_compute_volume_attach_v2.va_1
 <instance_id>/<volume_id>

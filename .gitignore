@@ -7,9 +7,9 @@ vars.tf
 .terraform*
 terraform.tfplan
 terraform.tfstate
-terraform-provider-mcs_darwin
-terraform-provider-mcs_linux
-terraform-provider-mcs_windows
+terraform-provider-vkcs_darwin
+terraform-provider-vkcs_linux
+terraform-provider-vkcs_windows
 bin/
 *.backup
 ./*.tfstate

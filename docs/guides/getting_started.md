@@ -1,29 +1,22 @@
 ---
-layout: "mcs"
-page_title: "Getting Started with the MCS Provider"
+layout: "vkcs"
+page_title: "Getting Started with the VKCS Provider"
 description: |-
-  Getting Started with the MCS Provider
+  Getting Started with the VKCS Provider
 ---
 
-# Create basic config for MCS Provider resources
+# Create basic config for VKCS Provider resources
 
-This example shows how to create a simple terraform configuration for creation of MCS resources.
+This example shows how to create a simple terraform configuration for creation of VKCS resources.
 
 First, create a Terraform config file named `main.tf`. Inside, you'll want to include the configuration of
-[MCS Provider](https://registry.terraform.io/providers/MailRuCloudSolutions/mcs/latest/docs),
-[Openstack Provider](https://www.terraform.io/docs/providers/openstack/index.html),
-[openstack_networking_network_v2](https://www.terraform.io/docs/providers/openstack/d/networking_network_v2.html),
-[openstack_networking_subnet_v2](https://www.terraform.io/docs/providers/openstack/r/networking_subnet_v2.html),
-[openstack_networking_network_v2](https://www.terraform.io/docs/providers/openstack/d/networking_network_v2.html),
-[openstack_networking_router_v2](https://www.terraform.io/docs/providers/openstack/r/networking_router_v2.html),
-[openstack_networking_router_interface_v2](https://www.terraform.io/docs/providers/openstack/r/networking_router_interface_v2.html),
-[openstack_compute_keypair_v2](https://www.terraform.io/docs/providers/openstack/d/compute_keypair_v2.html)
-and [openstack_compute_flavor_v2](https://www.terraform.io/docs/providers/openstack/d/compute_flavor_v2.html).
+[VKCS Provider](https://registry.terraform.io/providers/MailRuCloudSolutions/vkcs/latest/docs),
+[Openstack Provider](https://www.terraform.io/docs/providers/openstack/index.html).
 
-Use MCS provider:
+Use VKCS provider:
 
 ```hcl
-provider "mcs" {
+provider "vkcs" {
     username   = "some_user"
     password   = "s3cr3t"
     project_id = "some_project_id"
@@ -31,13 +24,13 @@ provider "mcs" {
 }
 ```
 
-Configure MCS provider:
+Configure VKCS provider:
 
 * The `username` field should be replaced with your user_name.
 * The `password` field should be replaced with your user's password.
 * The `project_id` field should be replaced with your project_id.
 
-For additional configuration parameters, please read [configuration reference](https://registry.terraform.io/providers/MailRuCloudSolutions/mcs/latest/docs#configuration-reference)
+For additional configuration parameters, please read [configuration reference](https://registry.terraform.io/providers/MailRuCloudSolutions/vkcs/latest/docs#configuration-reference)
 
 Use Openstack provider:
 
@@ -56,69 +49,3 @@ Configure Openstack provider:
 * The `user_name` field should be replaced with your user_name.
 * The `password` field should be replaced with your user's password.
 * The `tenant_id` field should be replaced with your project_id.
-
-Create network:
-```hcl
-resource "openstack_networking_network_v2" "mynet" {
-  name           = "mynet"
-}
-```
-
-Create subnet:
-
-```hcl
-resource "openstack_networking_subnet_v2" "mysubnet" {
-  name            = "mysubnet"
-  network_id      = openstack_networking_network_v2.mynet.id
-  cidr            = "10.100.0.0/16"
-  ip_version      = 4
-}
-```
-
-Use external network to get floating IPs:
-
-```hcl
-data "openstack_networking_network_v2" "extnet" {
-  name = "ext-net"
-}
-```
-
-Create router connected to external network:
-
-```hcl
-resource "openstack_networking_router_v2" "myrouter" {
-  name                = "myrouter"
-  external_network_id = data.openstack_networking_network_v2.extnet.id
-}
-```
-
-Connect private network to router
-
-```hcl
-resource "openstack_networking_router_interface_v2" "myrouterinterface" {
-  router_id = openstack_networking_router_v2.myrouter.id
-  subnet_id = openstack_networking_subnet_v2.mysubnet.id
-}
-```
-
-Use keypair:
-
-```hcl
-data "openstack_compute_keypair_v2" "mykeypair" {
-  name       = "mykey"
-}
-```
-
-Use flavor:
-
-```hcl
-data "openstack_compute_flavor_v2" "myflavor" {
-  name = "Standard-2-4-50"
-}
-```
- 
-You can see the list of all available flavours with the command:
-
-```
-openstack flavor list
-```

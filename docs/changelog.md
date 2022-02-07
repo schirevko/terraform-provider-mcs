@@ -1,11 +1,11 @@
 ---
-layout: "mcs"
-page_title: "MCS provider changelog"
+layout: "vkcs"
+page_title: "VKCS provider changelog"
 description: |-
-  The MCS provider's changelog.
+  The VKCS provider's changelog.
 ---
 
-# MCS Provider's changelog
+# VKCS Provider's changelog
 
 #### v0.5.8
 - Removed attribute `ingress_floating_ip` from `mcs_kubernetes_cluster`. 
