@@ -1,6 +1,6 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
-PKG_NAME=mcs
+PKG_NAME=vkcs
 
 default: build
 
@@ -8,13 +8,13 @@ build: fmtcheck
 	go install
 
 build_darwin: fmtcheck
-	GOOS=darwin CGO_ENABLED=0 go build -o terraform-provider-mcs_darwin
+	GOOS=darwin CGO_ENABLED=0 go build -o terraform-provider-vkcs_darwin
 
 build_linux: fmtcheck
-	GOOS=linux CGO_ENABLED=0 go build -o terraform-provider-mcs_linux
+	GOOS=linux CGO_ENABLED=0 go build -o terraform-provider-vkcs_linux
 
 build_windows: fmtcheck
-	GOOS=windows CGO_ENABLED=0 go build -o terraform-provider-mcs_windows
+	GOOS=windows CGO_ENABLED=0 go build -o terraform-provider-vkcs_windows
 
 test: fmtcheck
 	go test $(TEST) || exit 1
@@ -29,6 +29,10 @@ testacc_k8saas: fmtcheck
 
 testacc_dbaas: fmtcheck
 	TF_ACC=1 go test -run=TestAccDatabase $(TEST) -v $(TESTARGS) -timeout 120m
+
+testacc_compute: fmtcheck
+	TF_ACC=1 go test -run=TestAccCompute $(TEST) -v $(TESTARGS) -timeout 120m
+
 
 vet:
 	@echo "go vet ."
